@@ -1,0 +1,66 @@
+let () = System.use "matrix.iml";;
+let () = System.use "convolution.iml";;
+let () = System.use "max_pool.iml";;
+let () = System.use "fully_connected.iml";;
+let () = System.use "layers.iml";;
+let () = System.mod_use "layer0.iml";;
+let () = System.mod_use "layer4.iml";;
+
+
+let pp_approx fmt r = CCFormat.fprintf fmt "%s" (Real.to_string_approx r) [@@program]
+#install_printer pp_approx
+
+
+let (>>=) = Res.bind
+
+let layer_0 = Layer.convolution Layer0.filters
+
+let layer_1 = Layer.max_pool (2, 2)
+
+let layer_2 = Layer.flatten
+
+(* layer3 is a dropout layer, no need to represent it for execution *)
+
+let layer_4 = Layer.fc (fun x -> x) Layer4.weights
+
+let arg_max (output: real list) = match output with
+    | fst::(snd::[]) -> if fst >. snd then Ok "Happy" else Ok "Sad"
+    | _ -> Error "error"
+;;
+
+let model_raw input = layer_0 input >>= layer_1 >>= layer_2 >>= layer_4 ;;
+
+let model input = layer_0 input >>= layer_1 >>= layer_2 >>= layer_4 >>= process_output;;
+
+let input = [
+    [
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 0.0; 1.0; 0.0];
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 0.0; 1.0; 1.0; 1.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 1.0; 0.0; 0.0; 0.0; 1.0; 0.0; 0.0];
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+        [ 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0; 0.0];
+    ]        
+];;
+
+model_raw input;;
+model input;;
+
+(* instance (fun x -> Matrix.is_valid x && model x = Ok "Happy") *)
+
+let epsilon = 1.
+
+let (<=?) = Res.lte
+
+(* verify (fun x -> Matrix.is_valid x && (Matrix.l0 input x <=? epsilon) = (Ok true) ==> model x = Ok "Happy") *)
+
+(* let convolution_property x = 
+    let epsilon = 1. in
+    let conv_result = Convolution.convolution x filter in
+    let result_distance = conv_result >>= (Matrix.l0 res') in
+    Matrix.l0 x test <=? 1. ==> result_distance <=? 1. 
+
+verify convolution_property;; *)
