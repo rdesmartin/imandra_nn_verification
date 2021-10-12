@@ -1,5 +1,9 @@
 ## Imandra Neural Network Verification Library
 
+### Dissertation 
+
+The full dissertation is at `/H00359321_masters_thesis.pdf` 
+
 ### File hierarchy
 
 This repository holds the code for the Master's dissertation *Neural Network Verification With Imandra*.
